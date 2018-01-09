@@ -38,6 +38,7 @@ Disable IPv6 in `/etc/sysctl.conf` to remove duplicates in your sink-list:
     net.ipv6.conf.all.disable_ipv6=1
 
 Also modify `/etc/avahi/avahi-daemon.conf` for the same reasons
+
     use-ipv6=no
 
 Set the desired hostname in `/etc/hostname`
