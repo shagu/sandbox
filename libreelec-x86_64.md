@@ -22,7 +22,7 @@ Build LibreELEC x86_64
     dpkg-reconfigure dash
     # select "no"
 
-### Start the build
+### Get the Sources
 
     su -l ubuntu
     source /etc/environment
@@ -33,4 +33,78 @@ Build LibreELEC x86_64
     git clone https://github.com/LibreELEC/LibreELEC.tv.git
     cd ~/LibreELEC.tv
 
+### Patch LibreELEC
+
+This patch allows to build and pre-install addons during the build process:
+
+    diff --git a/config/show_config b/config/show_config
+    index 3de77b49e..efa28543d 100644
+    --- a/config/show_config
+    +++ b/config/show_config
+    @@ -156,6 +156,10 @@ show_config() {
+       config_message="$config_message\n - Default Skin:\t\t\t $SKIN_DEFAULT"
+       config_message="$config_message\n - Include extra fonts:\t\t\t $KODI_EXTRA_FONTS"
+
+    +  for config_addon in $ADDITIONAL_ADDONS; do
+    +    config_message="$config_message\n - Include Addon:\t\t\t $config_addon"
+    +  done
+    +
+       if [ "$(type -t show_distro_config)" = "function" ]; then
+         show_distro_config
+       fi
+    diff --git a/distributions/LibreELEC/options b/distributions/LibreELEC/options
+    index 0855ebbd7..e6c5f83fb 100644
+    --- a/distributions/LibreELEC/options
+    +++ b/distributions/LibreELEC/options
+    @@ -64,6 +64,11 @@
+     # e.g. ADDITIONAL_DRIVERS="DRIVER1 DRIVER2"
+       ADDITIONAL_DRIVERS="RTL8192CU RTL8192DU RTL8192EU RTL8188EU RTL8812AU"
+
+    +# additional addons to install:
+    +# Space separated list is supported,
+    +# e.g. ADDITIONAL_ADDONS="game.libretro game.libretro.2048 vdr-addon"
+    +  ADDITIONAL_ADDONS=""
+    +
+     # build and install bluetooth support (yes / no)
+       BLUETOOTH_SUPPORT="yes"
+
+    diff --git a/scripts/image b/scripts/image
+    index d21e067a0..3e4211a24 100755
+    --- a/scripts/image
+    +++ b/scripts/image
+    @@ -167,6 +167,9 @@ $SCRIPTS/install network
+     # Multimedia support
+     [ ! "$MEDIACENTER" = "no" ] && $SCRIPTS/install mediacenter
+
+    +# Additional addons
+    +[ ! "$MEDIACENTER" = "no" ] && $SCRIPTS/include_addon $ADDITIONAL_ADDONS
+    +
+     # Sound support
+     [ "$ALSA_SUPPORT" = "yes" ] && $SCRIPTS/install alsa
+
+    diff --git a/scripts/include_addon b/scripts/include_addon
+    new file mode 100755
+    index 000000000..b4d521f73
+    --- /dev/null
+    +++ b/scripts/include_addon
+    @@ -0,0 +1,11 @@
+    +#!/bin/bash
+    +
+    +for addon in $@; do
+    +  echo -e "\e[1;33m  ADDON \e[0m$addon"
+    +  . config/options $addon
+    +
+    +  $SCRIPTS/create_addon $addon &> /dev/null
+    +
+    +  cp -rf "$ADDON_BUILD/$PKG_ADDON_ID" \
+    +         "$INSTALL/usr/share/kodi/addons/"
+    +done
+
+### Configure LibreELEC
+
+The main configuration can be done by editing the file: `distributions/LibreELEC/options`
+
+### Start the build
+
     PROJECT=Generic ARCH=x86_64 make
+
