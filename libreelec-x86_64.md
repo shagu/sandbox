@@ -38,7 +38,7 @@ Build LibreELEC x86_64
 This patch allows to build and pre-install addons during the build process:
 
     diff --git a/config/show_config b/config/show_config
-    index 3de77b49e..efa28543d 100644
+    index 3de77b4..efa2854 100644
     --- a/config/show_config
     +++ b/config/show_config
     @@ -156,6 +156,10 @@ show_config() {
@@ -53,7 +53,7 @@ This patch allows to build and pre-install addons during the build process:
          show_distro_config
        fi
     diff --git a/distributions/LibreELEC/options b/distributions/LibreELEC/options
-    index 0855ebbd7..e6c5f83fb 100644
+    index 0855ebb..4cbffe2 100644
     --- a/distributions/LibreELEC/options
     +++ b/distributions/LibreELEC/options
     @@ -64,6 +64,11 @@
@@ -63,13 +63,13 @@ This patch allows to build and pre-install addons during the build process:
     +# additional addons to install:
     +# Space separated list is supported,
     +# e.g. ADDITIONAL_ADDONS="game.libretro game.libretro.2048 vdr-addon"
-    +  ADDITIONAL_ADDONS=""
+    +  ADDITIONAL_ADDONS="game.libretro game.libretro.2048 vdr-addon"
     +
      # build and install bluetooth support (yes / no)
        BLUETOOTH_SUPPORT="yes"
 
     diff --git a/scripts/image b/scripts/image
-    index d21e067a0..3e4211a24 100755
+    index d21e067..3e4211a 100755
     --- a/scripts/image
     +++ b/scripts/image
     @@ -167,6 +167,9 @@ $SCRIPTS/install network
@@ -84,10 +84,10 @@ This patch allows to build and pre-install addons during the build process:
 
     diff --git a/scripts/include_addon b/scripts/include_addon
     new file mode 100755
-    index 000000000..b4d521f73
+    index 0000000..bf64425
     --- /dev/null
     +++ b/scripts/include_addon
-    @@ -0,0 +1,11 @@
+    @@ -0,0 +1,18 @@
     +#!/bin/bash
     +
     +for addon in $@; do
@@ -98,6 +98,13 @@ This patch allows to build and pre-install addons during the build process:
     +
     +  cp -rf "$ADDON_BUILD/$PKG_ADDON_ID" \
     +         "$INSTALL/usr/share/kodi/addons/"
+    +
+    +  # enable non-systemd addons
+    +  SYSTEMD_SERVICE="$INSTALL/usr/share/kodi/addons/$PKG_ADDON_ID/system.d/$PKG_ADDON_ID.service"
+    +  if [ ! -f "$SYSTEMD_SERVICE" ]; then
+    +    ADDON_MANIFEST=$INSTALL/usr/share/kodi/system/addon-manifest.xml
+    +    xmlstarlet ed -L --subnode "/addons" -t elem -n "addon" -v "$PKG_ADDON_ID" $ADDON_MANIFEST
+    +  fi
     +done
 
 ### Configure LibreELEC
