@@ -59,6 +59,71 @@
 - Make sure the devices are enabled
   - Remove `option disabled '1'` from `config wifi-device` section
 
+## LAN-Only WiFi
+
+    export PASS="CHANGEIT"
+    export NAME="LAN_ONLY_WIFI"
+    export DEVICE="radio1"
+
+    uci set network.$NAME=interface
+    uci set network.$NAME.type='bridge'
+    uci set network.$NAME.proto='static'
+    uci set network.$NAME.ipaddr='10.4.5.1'
+    uci set network.$NAME.netmask='255.255.255.0'
+
+    uci set dhcp.$NAME=dhcp
+    uci set dhcp.$NAME.start='100'
+    uci set dhcp.$NAME.leasetime='4h'
+    uci set dhcp.$NAME.limit='250'
+    uci set dhcp.$NAME.interface="$NAME"
+
+    uci add firewall zone
+    uci set firewall.@zone[-1].name="$NAME"
+    uci set firewall.@zone[-1].input='ACCEPT'
+    uci set firewall.@zone[-1].output='ACCEPT'
+    uci set firewall.@zone[-1].forward='ACCEPT'
+    uci set firewall.@zone[-1].network="$NAME"
+
+    uci add firewall forwarding
+    uci set firewall.@forwarding[-1].dest='lan'
+    uci set firewall.@forwarding[-1].src="$NAME"
+
+    uci add firewall forwarding
+    uci set firewall.@forwarding[-1].dest="$NAME"
+    uci set firewall.@forwarding[-1].src='lan'
+
+    uci add wireless wifi-iface
+    uci set wireless.@wifi-iface[-1].ssid="$NAME"
+    uci set wireless.@wifi-iface[-1].device="$DEVICE"
+    uci set wireless.@wifi-iface[-1].mode='ap'
+    uci set wireless.@wifi-iface[-1].disabled='1'
+    uci set wireless.@wifi-iface[-1].encryption='psk2'
+    uci set wireless.@wifi-iface[-1].key="$PASS"
+    uci set wireless.@wifi-iface[-1].network="$NAME"
+
+    uci commit
+
+## WAN-Only WiFi
+
+    export PASS="CHANGEIT"
+    export NAME="WAN_ONLY_WIFI"
+    export DEVICE="radio1"
+
+    uci set network.wan.type='bridge'
+    uci set network.wan6.type='bridge'
+
+    uci add wireless wifi-iface
+    uci set wireless.@wifi-iface[-1].ssid="$NAME"
+    uci set wireless.@wifi-iface[-1].device="$DEVICE"
+    uci set wireless.@wifi-iface[-1].mode='ap'
+    uci set wireless.@wifi-iface[-1].disabled='1'
+    uci set wireless.@wifi-iface[-1].encryption='psk2'
+    uci set wireless.@wifi-iface[-1].key="$PASS"
+    uci set wireless.@wifi-iface[-1].network='wan wan6'
+    uci set wireless.@wifi-iface[-1].isolate='1'
+
+    uci commit
+
 
 ## Menuconfig for NAS Usage
 
